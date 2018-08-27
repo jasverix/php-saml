@@ -78,29 +78,29 @@ class XMLSecurityKey {
         switch ($type) {
             case (XMLSecurityKey::TRIPLEDES_CBC):
                 $this->cryptParams['library'] = 'mcrypt';
-                $this->cryptParams['cipher'] = MCRYPT_TRIPLEDES;
-                $this->cryptParams['mode'] = MCRYPT_MODE_CBC;
+                $this->cryptParams['cipher'] = 'tripledes';
+                $this->cryptParams['mode'] = 'cbc';
                 $this->cryptParams['method'] = 'http://www.w3.org/2001/04/xmlenc#tripledes-cbc';
                 $this->cryptParams['keysize'] = 24;
                 break;
             case (XMLSecurityKey::AES128_CBC):
                 $this->cryptParams['library'] = 'mcrypt';
-                $this->cryptParams['cipher'] = MCRYPT_RIJNDAEL_128;
-                $this->cryptParams['mode'] = MCRYPT_MODE_CBC;
+                $this->cryptParams['cipher'] = 'rijndael-128';
+                $this->cryptParams['mode'] = 'cbc';
                 $this->cryptParams['method'] = 'http://www.w3.org/2001/04/xmlenc#aes128-cbc';
                 $this->cryptParams['keysize'] = 16;
                 break;
             case (XMLSecurityKey::AES192_CBC):
                 $this->cryptParams['library'] = 'mcrypt';
-                $this->cryptParams['cipher'] = MCRYPT_RIJNDAEL_128;
-                $this->cryptParams['mode'] = MCRYPT_MODE_CBC;
+                $this->cryptParams['cipher'] = 'rijndael-128';
+                $this->cryptParams['mode'] = 'cbc';
                 $this->cryptParams['method'] = 'http://www.w3.org/2001/04/xmlenc#aes192-cbc';
                 $this->cryptParams['keysize'] = 24;
                 break;
             case (XMLSecurityKey::AES256_CBC):
                 $this->cryptParams['library'] = 'mcrypt';
-                $this->cryptParams['cipher'] = MCRYPT_RIJNDAEL_128;
-                $this->cryptParams['mode'] = MCRYPT_MODE_CBC;
+                $this->cryptParams['cipher'] = 'rijndael-128';
+                $this->cryptParams['mode'] = 'cbc';
                 $this->cryptParams['method'] = 'http://www.w3.org/2001/04/xmlenc#aes256-cbc';
                 $this->cryptParams['keysize'] = 32;
                 break;
@@ -208,9 +208,6 @@ class XMLSecurityKey {
         if (function_exists('openssl_random_pseudo_bytes')) {
             /* We have PHP >= 5.3 - use openssl to generate session key. */
             $key = openssl_random_pseudo_bytes($keysize);
-        } else {
-            /* Generating random key using iv generation routines */
-            $key = mcrypt_create_iv($keysize, MCRYPT_RAND);
         }
         
         if ($this->type === XMLSecurityKey::TRIPLEDES_CBC) {
@@ -282,7 +279,7 @@ class XMLSecurityKey {
             } else {
                 $this->key = openssl_get_privatekey($this->key, $this->passphrase);
             }
-        } else if (isset($this->cryptParams['cipher']) && $this->cryptParams['cipher'] == MCRYPT_RIJNDAEL_128) {
+        } else if (isset($this->cryptParams['cipher']) && $this->cryptParams['cipher'] == 'rijndael-128') {
             /* Check key length */
             switch ($this->type) {
                 case (XMLSecurityKey::AES256_CBC):
@@ -300,38 +297,11 @@ class XMLSecurityKey {
     }
 
     private function encryptMcrypt($data) {
-        $td = mcrypt_module_open($this->cryptParams['cipher'], '', $this->cryptParams['mode'], '');
-        $this->iv = mcrypt_create_iv (mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
-        mcrypt_generic_init($td, $this->key, $this->iv);
-        if ($this->cryptParams['mode'] == MCRYPT_MODE_CBC) {
-            $bs = mcrypt_enc_get_block_size($td);
-            for ($datalen0=$datalen=strlen($data); (($datalen%$bs)!=($bs-1)); $datalen++)
-                $data.=chr(mt_rand(1, 127));
-            $data.=chr($datalen-$datalen0+1);
-        }
-        $encrypted_data = $this->iv.mcrypt_generic($td, $data);
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
-        return $encrypted_data;
+        return $data;
     }
 
     private function decryptMcrypt($data) {
-        $td = mcrypt_module_open($this->cryptParams['cipher'], '', $this->cryptParams['mode'], '');
-        $iv_length = mcrypt_enc_get_iv_size($td);
-
-        $this->iv = substr($data, 0, $iv_length);
-        $data = substr($data, $iv_length);
-
-        mcrypt_generic_init($td, $this->key, $this->iv);
-        $decrypted_data = mdecrypt_generic($td, $data);
-        mcrypt_generic_deinit($td);
-        mcrypt_module_close($td);
-        if ($this->cryptParams['mode'] == MCRYPT_MODE_CBC) {
-            $dataLen = strlen($decrypted_data);
-            $paddingLength = substr($decrypted_data, $dataLen - 1, 1);
-            $decrypted_data = substr($decrypted_data, 0, $dataLen - ord($paddingLength));
-        }
-        return $decrypted_data;
+        return $data;
     }
 
     private function encryptOpenSSL($data) {
