@@ -94,9 +94,11 @@ class OneLogin_Saml2_Response
      *
      * @param string|null $requestId The ID of the AuthNRequest sent by this SP to the IdP
      *
+     * @param bool $throwException
      * @return bool Validate the document
+     * @throws Exception
      */
-    public function isValid($requestId = null)
+    public function isValid($requestId = null, bool $throwException = false)
     {
         $this->_error = null;
         try {
@@ -115,7 +117,7 @@ class OneLogin_Saml2_Response
                 );
             }
 
-            $status = $this->checkStatus();
+            $this->checkStatus();
 
             $singleAssertion = $this->validateNumAssertions();
             if (!$singleAssertion) {
@@ -396,6 +398,10 @@ class OneLogin_Saml2_Response
             }
             return true;
         } catch (Exception $e) {
+            if($throwException) {
+                throw $e;
+            }
+
             $this->_error = $e->getMessage();
             $debug = $this->_settings->isDebugActive();
             if ($debug) {

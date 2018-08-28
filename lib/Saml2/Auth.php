@@ -179,10 +179,12 @@ class OneLogin_Saml2_Auth
      *
      * @param string|null $requestId The ID of the AuthNRequest sent by this SP to the IdP
      *
+     * @param bool $throwException
      * @throws OneLogin_Saml2_Error
      * @throws OneLogin_Saml2_ValidationError
+     * @throws Exception
      */
-    public function processResponse($requestId = null)
+    public function processResponse($requestId = null, bool $throwException = false)
     {
         $this->_errors = array();
         $this->_errorReason = null;
@@ -191,7 +193,7 @@ class OneLogin_Saml2_Auth
             $response = new OneLogin_Saml2_Response($this->_settings, $_POST['SAMLResponse']);
             $this->_lastResponse = $response->getXMLDocument();
 
-            if ($response->isValid($requestId)) {
+            if ($response->isValid($requestId, $throwException)) {
                 $this->_attributes = $response->getAttributes();
                 $this->_attributesWithFriendlyName = $response->getAttributesWithFriendlyName();
                 $this->_nameid = $response->getNameId();
