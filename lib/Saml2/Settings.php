@@ -531,6 +531,14 @@ class OneLogin_Saml2_Settings
                 $errors[] = 'idp_slo_url_invalid';
             }
 
+            if (isset($idp['singleLogoutService'])
+                && isset($idp['singleLogoutService']['responseUrl'])
+                && !empty($idp['singleLogoutService']['responseUrl'])
+                && !filter_var($idp['singleLogoutService']['responseUrl'], FILTER_VALIDATE_URL)
+            ) {
+                $errors[] = 'idp_slo_response_url_invalid';
+            }
+
             if (isset($settings['security'])) {
                 $security = $settings['security'];
 
@@ -834,7 +842,7 @@ class OneLogin_Saml2_Settings
         }
 
         //Sign Metadata
-        if (isset($this->_security['signMetadata']) && $this->_security['signMetadata'] !== false) {
+        if (isset($this->_security['signMetadata']) && $this->_security['signMetadata'] != false) {
             if ($this->_security['signMetadata'] === true) {
                 $keyMetadata = $this->getSPkey();
                 $certMetadata = $cert;
